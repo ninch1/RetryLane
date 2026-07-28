@@ -1,34 +1,15 @@
 import { getDestinations } from './api/destinationApi';
-import { useEffect, useState } from 'react';
-import type { Destination } from './types/Destination';
+import { useQuery } from '@tanstack/react-query';
+import { DestinationsList } from './components/DestinationsList';
 
 export default function App() {
-  const [destinations, setDestinations] = useState<Destination[]>([]);
-  const [error, setError] = useState<Error | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchDestinations() {
-      try {
-        setError(null);
-
-        const response = await getDestinations();
-        setDestinations(response.data);
-      } catch (error) {
-        console.error('Error fetching destinations:', error);
-
-        if (error instanceof Error) {
-          setError(error);
-        } else {
-          setError(new Error('An unknown error occurred'));
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchDestinations();
-  }, []);
+  const { data, error, isLoading } = useQuery({
+    queryKey: ['destinations'],
+    queryFn: getDestinations,
+  });
+  const destinations = data?.data ?? [];
+  const errorMessage =
+    error instanceof Error ? error.message : 'An unknown error occurred';
 
   return (
     <main className='min-h-screen bg-slate-50 px-6 py-12 text-slate-900'>
@@ -54,7 +35,7 @@ export default function App() {
 
         {error && (
           <div className='mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>
-            {error.message}
+            {errorMessage}
           </div>
         )}
 
@@ -86,28 +67,7 @@ export default function App() {
           )}
 
           {!isLoading && destinations.length > 0 && (
-            <ul className='divide-y divide-slate-200'>
-              {destinations.map((destination) => (
-                <li
-                  key={destination.id}
-                  className='flex items-center justify-between gap-6 px-6 py-5 transition hover:bg-slate-50'
-                >
-                  <div className='min-w-0'>
-                    <h3 className='font-semibold text-slate-900'>
-                      {destination.name}
-                    </h3>
-
-                    <p className='mt-1 truncate text-sm text-slate-500'>
-                      {destination.url}
-                    </p>
-                  </div>
-
-                  <span className='shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700'>
-                    Active
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <DestinationsList destinations={destinations} />
           )}
         </section>
       </div>
