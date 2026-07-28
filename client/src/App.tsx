@@ -1,4 +1,8 @@
-import { createDestination, getDestinations } from './api/destinationApi';
+import {
+  createDestination,
+  deleteDestination,
+  getDestinations,
+} from './api/destinationApi';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import type { ComponentProps } from 'react';
@@ -10,6 +14,7 @@ export default function App() {
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const { data, error, isLoading } = useQuery({
     queryKey: ['destinations'],
@@ -23,6 +28,20 @@ export default function App() {
       setName('');
       setUrl('');
       setIsFormOpen(false);
+    },
+  });
+  const deleteDestinationMutation = useMutation({
+    mutationFn: deleteDestination,
+    onSuccess: async () => {
+      setDeleteError(null);
+      await queryClient.invalidateQueries({ queryKey: ['destinations'] });
+    },
+    onError: (mutationError) => {
+      if (mutationError instanceof Error) {
+        setDeleteError(mutationError.message);
+      } else {
+        setDeleteError('Failed to delete destination');
+      }
     },
   });
 
@@ -59,6 +78,11 @@ export default function App() {
 
     setFormError(null);
     createDestinationMutation.mutate({ name: trimmedName, url: trimmedUrl });
+  };
+
+  const handleDeleteDestination = (destinationId: string) => {
+    setDeleteError(null);
+    deleteDestinationMutation.mutate(destinationId);
   };
 
   return (
@@ -185,6 +209,12 @@ export default function App() {
           </div>
         )}
 
+        {deleteError && (
+          <div className='mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700'>
+            {deleteError}
+          </div>
+        )}
+
         <section className='overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm'>
           <div className='border-b border-slate-200 px-6 py-4'>
             <h2 className='font-semibold'>Saved destinations</h2>
@@ -213,7 +243,11 @@ export default function App() {
           )}
 
           {!isLoading && destinations.length > 0 && (
-            <DestinationsList destinations={destinations} />
+            <DestinationsList
+              destinations={destinations}
+              deletingDestinationId={deleteDestinationMutation.variables ?? null}
+              onDelete={handleDeleteDestination}
+            />
           )}
         </section>
       </div>

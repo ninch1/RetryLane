@@ -1,6 +1,7 @@
 import prisma from '../lib/prisma';
 import { Request, Response } from 'express';
 import { z } from 'zod';
+import ErrorResponse from '../errors/ErrorResponse';
 
 const createDestinationSchema = z.object({
   name: z
@@ -39,5 +40,31 @@ export const getDestinations = async (req: Request, res: Response) => {
     success: true,
     data: destinations,
     message: 'Destinations fetched successfully',
+  });
+};
+
+const deleteDestinationParamsSchema = z.object({
+  id: z.uuid('Invalid destination id'),
+});
+
+export const deleteDestination = async (req: Request, res: Response) => {
+  const { id } = deleteDestinationParamsSchema.parse(req.params);
+
+  const existingDestination = await prisma.destination.findUnique({
+    where: { id },
+  });
+
+  if (!existingDestination) {
+    throw new ErrorResponse('Destination not found', 404);
+  }
+
+  const deletedDestination = await prisma.destination.delete({
+    where: { id },
+  });
+
+  res.status(200).json({
+    success: true,
+    data: deletedDestination,
+    message: 'Destination deleted successfully',
   });
 };

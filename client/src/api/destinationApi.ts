@@ -53,3 +53,15 @@ export const createDestination = async (
 
   return response.json();
 };
+
+export const deleteDestination = async (id: string): Promise<DestinationResponse> => {
+  const response = await fetch(`http://localhost:3000/api/destinations/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+
+  return response.json();
+};
