@@ -1,23 +1,37 @@
-import ErrorResponse from "../errors/ErrorResponse";
-import { Request, Response, NextFunction } from "express";
+import { ZodError } from 'zod';
+import { NextFunction, Request, Response } from 'express';
+import ErrorResponse from '../errors/ErrorResponse';
 
-function errorMiddleware(
-  err: ErrorResponse | Error,
+export const errorMiddleware = (
+  error: unknown,
   req: Request,
   res: Response,
   next: NextFunction,
-) {
-  if (err instanceof ErrorResponse) {
-    res.status(err.statusCode).json({ message: err.message });
+) => {
+  if (error instanceof ZodError) {
+    res.status(400).json({
+      success: false,
+      message: 'Invalid request data',
+      errors: error.issues.map((issue) => ({
+        path: issue.path.join('.'),
+        message: issue.message,
+      })),
+    });
     return;
   }
 
-  if (err instanceof Error) {
-    res.status(500).json({ message: err.message });
+  if (error instanceof ErrorResponse) {
+    res.status(error.statusCode).json({
+      success: false,
+      message: error.message,
+    });
     return;
   }
 
-  res.status(500).json({ message: "Internal Server Error" });
-}
+  console.error(error);
 
-export default errorMiddleware;
+  res.status(500).json({
+    success: false,
+    message: 'Internal server error',
+  });
+};
