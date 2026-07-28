@@ -3,8 +3,22 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 
 const createDestinationSchema = z.object({
-  name: z.string().min(1),
-  url: z.string().min(1),
+  name: z
+    .string()
+    .trim()
+    .min(1, 'Name is required'),
+  url: z
+    .string()
+    .trim()
+    .min(1, 'URL is required')
+    .refine((value) => {
+      try {
+        const parsedUrl = new URL(value);
+        return ['http:', 'https:'].includes(parsedUrl.protocol);
+      } catch {
+        return false;
+      }
+    }, 'URL must be a valid URL'),
 });
 
 export const createDestination = async (req: Request, res: Response) => {
