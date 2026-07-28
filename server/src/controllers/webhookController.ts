@@ -1,27 +1,22 @@
 import { Request, Response } from "express";
 import { sendWebhook } from "../services/sendWebhook";
+import ErrorResponse from "../errors/ErrorResponse";
 
 export const webhookController = async (req: Request, res: Response) => {
   const { destinationUrl, type, payload } = req.body;
 
   if (!destinationUrl || !type || payload === undefined) {
-    res.status(400).json({
-      success: false,
-      message: "destinationUrl, type, and payload are required",
-    });
-    return;
+    throw new ErrorResponse(
+      "destinationUrl, type, and payload are required",
+      400,
+    );
   }
 
   try {
     const result = await sendWebhook(destinationUrl, { type, payload });
 
     if (!result.success) {
-      res.status(502).json({
-        success: false,
-        message: "Destination rejected the webhook",
-        destinationStatusCode: result.statusCode,
-      });
-      return;
+      throw new ErrorResponse("Destination rejected the webhook", 502);
     }
 
     res.status(200).json({
@@ -29,12 +24,8 @@ export const webhookController = async (req: Request, res: Response) => {
       message: "Webhook sent successfully",
       destinationStatusCode: result.statusCode,
     });
+    return;
   } catch (error) {
-    console.error("Webhook delivery failed:", error);
-
-    res.status(502).json({
-      success: false,
-      message: "Could not reach the destination",
-    });
+    throw new ErrorResponse("Could not reach the destination", 502);
   }
 };

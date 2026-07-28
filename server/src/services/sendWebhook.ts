@@ -1,3 +1,5 @@
+// This service is used to send webhooks to the destination URL
+
 export const sendWebhook = async (
   destinationUrl: string,
   event: { type: string; payload: unknown },
