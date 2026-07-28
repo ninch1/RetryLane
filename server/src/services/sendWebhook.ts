@@ -2,7 +2,7 @@
 
 export const sendWebhook = async (
   destinationUrl: string,
-  event: { type: string; payload: unknown },
+  event: { id?: string; type: string; payload: unknown },
 ) => {
   const response = await fetch(destinationUrl, {
     method: "POST",
