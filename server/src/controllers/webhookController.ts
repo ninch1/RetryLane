@@ -12,20 +12,16 @@ export const webhookController = async (req: Request, res: Response) => {
     );
   }
 
-  try {
-    const result = await sendWebhook(destinationUrl, { type, payload });
+  const result = await sendWebhook(destinationUrl, { type, payload });
 
-    if (!result.success) {
-      throw new ErrorResponse("Destination rejected the webhook", 502);
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Webhook sent successfully",
-      destinationStatusCode: result.statusCode,
-    });
-    return;
-  } catch (error) {
-    throw new ErrorResponse("Could not reach the destination", 502);
+  if (!result.success) {
+    throw new ErrorResponse("Destination rejected the webhook", 502);
   }
+
+  res.status(200).json({
+    success: true,
+    message: "Webhook sent successfully",
+    destinationStatusCode: result.statusCode,
+  });
+  return;
 };
